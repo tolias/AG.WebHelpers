@@ -2,7 +2,7 @@
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{B2E077F7-41CA-4261-94CF-9045B2B8C0C8}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -37,8 +37,15 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AG.LiteLoggers, Version=2.4.4.27, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\AG.LiteLoggers.2.4.4.27\lib\net35\AG.LiteLoggers.dll</HintPath>
+    </Reference>
+    <Reference Include="AG.Utilities, Version=1.0.0.1, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\AG.Utilities.1.0.0.1\lib\net35\AG.Utilities.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Net" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Security" />
     <Reference Include="System.Web" />
     <Reference Include="System.Windows.Forms" />
@@ -68,14 +75,10 @@
     <Compile Include="UrlPath.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\AG.LiteLoggers\LiteLoggers\AG.LiteLoggers.csproj">
-      <Project>{f46aaf93-2aff-4970-beb0-8dcabcea4278}</Project>
-      <Name>AG.LiteLoggers</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\AG.Utilities\AG.Utilities\AG.Utilities.csproj">
-      <Project>{5C960107-46CE-4F11-9CD4-125FED7773C7}</Project>
-      <Name>AG.Utilities</Name>
-    </ProjectReference>
+    <None Include="AG.WebHelpers.nuspec">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

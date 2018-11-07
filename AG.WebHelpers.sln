@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27428.2015
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AG.WebHelpers", "AG.WebHelpers\AG.WebHelpers.csproj", "{B2E077F7-41CA-4261-94CF-9045B2B8C0C8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+		ReleaseMasked|Any CPU = ReleaseMasked|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B2E077F7-41CA-4261-94CF-9045B2B8C0C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B2E077F7-41CA-4261-94CF-9045B2B8C0C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B2E077F7-41CA-4261-94CF-9045B2B8C0C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B2E077F7-41CA-4261-94CF-9045B2B8C0C8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B2E077F7-41CA-4261-94CF-9045B2B8C0C8}.ReleaseMasked|Any CPU.ActiveCfg = Release|Any CPU
+		{B2E077F7-41CA-4261-94CF-9045B2B8C0C8}.ReleaseMasked|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5234A110-D5E5-40A4-A714-7C75FE16EF18}
+	EndGlobalSection
+EndGlobal
