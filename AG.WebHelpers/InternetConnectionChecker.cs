@@ -1,13 +1,7 @@
-﻿using AG.Loggers;
-using AG.Utilities.Binding;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading;
-using System.Timers;
+using Serilog.Core;
 
 namespace AG.WebHelpers
 {
@@ -17,6 +11,10 @@ namespace AG.WebHelpers
 
         public InternetConnectionLogger InternetConnectionLogger;
         public int Timeout = 10000;
+
+        public InternetConnectionChecker(Logger logger) : base(logger)
+        {
+        }
 
         public override bool CheckForAvailability(out Func<string> messageFunc)
         {
@@ -66,7 +64,7 @@ namespace AG.WebHelpers
             }
             catch (Exception ex)
             {
-                if(useLogging)
+                if (useLogging)
                 {
                     stopWatch.Stop();
                     var errMsg = ExceptionInfoProvider.GetExceptionInfo(ex, false, false, false, false);

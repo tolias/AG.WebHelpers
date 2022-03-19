@@ -1,0 +1,17 @@
+* исправлено
++ добавлено
+- удалено
+~ изменено
+
+1.0.0.8a: (3) (2013.07.02)
+	+ Added: class TextBoxLogger
+	+ Added: class FileAndTextBoxLogger
+	~ FileLogger.logFileName -> FileLogger.LogFileName and maked public
+	* Class ProgramInfo returned info for library assembly, not for a executing assmebly
+	+ Added: in class BaseLogger methods with 1 parameter Exception
+	+ All loggers maked thread-safe
+	+ Added property ExtendedPath.ApplicationExecutablePath
+	+ Improved outputing exception info
+
+1.1.0.9: (1) (2013.09.25)
+	~ Many new changes

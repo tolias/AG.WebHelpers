@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AG.WebHelpers</RootNamespace>
     <AssemblyName>AG.WebHelpers</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SccProjectName>SAK</SccProjectName>
     <SccLocalPath>SAK</SccLocalPath>
@@ -27,6 +27,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -35,13 +36,18 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AG.LiteLoggers, Version=2.4.4.27, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\AG.LiteLoggers.2.4.4.27\lib\net35\AG.LiteLoggers.dll</HintPath>
     </Reference>
-    <Reference Include="AG.Utilities, Version=1.0.0.1, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\AG.Utilities.1.0.0.1\lib\net35\AG.Utilities.dll</HintPath>
+    <Reference Include="AG.Utilities, Version=1.0.0.2, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\..\MyProgs\MyMiniTools\ServerHealthService\packages\AG.Utilities.1.0.0.2\lib\net35\AG.Utilities.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Serilog, Version=2.0.0.0, Culture=neutral, PublicKeyToken=24c2f752a8e58a10, processorArchitecture=MSIL">
+      <HintPath>..\..\..\MyProgs\MyMiniTools\ServerHealthService\packages\Serilog.2.10.0\lib\net45\Serilog.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Net" />

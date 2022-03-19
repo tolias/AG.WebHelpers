@@ -70,11 +70,11 @@ namespace AG.WebHelpers.Requesting
                         Cookies.Add(response.Cookies);
                 }
 
-                using (Stream receiveStream = response.GetResponseStream())
+                using (var responseStream = response.GetResponseStream())
                 {
                     //receiveStream.ReadTimeout = Timeout;
                     //receiveStream.WriteTimeout = Timeout;
-                    using (StreamReader readStream = new StreamReader(receiveStream, Encoding.UTF8))
+                    using (var readStream = new StreamReader(responseStream, Encoding.UTF8))
                     {
                         content = readStream.ReadToEnd();
                     }

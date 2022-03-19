@@ -1,49 +1,94 @@
-﻿using AG.Utilities.Binding;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
+﻿using System;
 using System.Threading;
 using System.Timers;
+using Serilog.Core;
 
 namespace AG.WebHelpers
 {
     public abstract class AvailabilityCheckerBase
     {
         private System.Timers.Timer _tmrChecker = new System.Timers.Timer(60000);
-        private bool _isAvailable;
+        private bool _previousState;
+        private bool _previousStateWithoutFiltering;
         public event EventHandler<AvailabilityEventArgs> AvailabilityChanged;
         private double _successfulCheckingInterval;
+        public DateTime LastAvailabilityTime { get; protected set; }
+        public DateTime LastUnavailabilityTime { get; protected set; }
+        public TimeSpan MaxUnavailabilityIntervalToIgnore;
+        private readonly Logger _logger;
 
-        protected AvailabilityCheckerBase()
+        protected AvailabilityCheckerBase(Logger logger)
         {
+            _logger = logger;
             _tmrChecker.Elapsed += _tmrChecker_Elapsed;
+        }
+
+        public TimeSpan LastUnavailabilityInterval => LastUnavailabilityTime - LastAvailabilityTime;
+
+        public bool IsLastUnavailabilityFilteredOut
+        {
+            get
+            {
+                if (MaxUnavailabilityIntervalToIgnore == TimeSpan.Zero)
+                    return false;
+
+                return LastUnavailabilityInterval < MaxUnavailabilityIntervalToIgnore;
+            }
         }
 
         private void SetAvailability(bool state, Func<string> messageFunc)
         {
-            if(_isAvailable != state)
-            {
-                _isAvailable = state;
-                AvailabilityChanged?.Invoke(null, new AvailabilityEventArgs(state, messageFunc?.Invoke()));
-            }
+            _previousStateWithoutFiltering = state;
+
+            if (state)
+                LastAvailabilityTime = DateTime.Now;
+            else
+                LastUnavailabilityTime = DateTime.Now;
 
             if (state)
             {
+                if (_previousState)
+                    return;
+
+                _previousState = true;
                 _tmrChecker.Interval = _successfulCheckingInterval;
+                _logger.Debug($"Set successful check interval: {_tmrChecker.Interval}");
+                OnAvailabilityChanged(messageFunc);
+
+                return;
+            }
+
+            if (_tmrChecker.Interval >= _successfulCheckingInterval - 1000)
+            {
+                _tmrChecker.Interval = 1000;
+                _logger.Debug($"Set check interval to {_tmrChecker.Interval}");
+            }
+            else if (_tmrChecker.Interval < _successfulCheckingInterval / 2)
+            {
+                _tmrChecker.Interval += 5000;
+                _logger.Debug($"Set check interval to {_tmrChecker.Interval}");
             }
             else
+                _logger.Debug($"Leave check interval: {_tmrChecker.Interval}");
+
+            if (!_previousState)
+                return;
+
+            if (IsLastUnavailabilityFilteredOut)
             {
-                if (_tmrChecker.Interval >= _successfulCheckingInterval - 1000)
-                {
-                    _tmrChecker.Interval = 1000;
-                }
-                else if (_tmrChecker.Interval < _successfulCheckingInterval / 2)
-                {
-                    _tmrChecker.Interval += 5000;
-                }
+                _logger.Debug($"Not available but filtered out for {this}: availability time: {LastAvailabilityTime}, unavailability time: {LastUnavailabilityTime}");
+                return;
             }
+
+            _previousState = false;
+            OnAvailabilityChanged(messageFunc);
+        }
+
+        protected void OnAvailabilityChanged(Func<string> messageFunc)
+        {
+            var eArgs = new AvailabilityEventArgs(_previousState, messageFunc?.Invoke(), LastAvailabilityTime, LastUnavailabilityTime);
+            _logger.Debug($"Availability changed for {this}: {eArgs}");
+            AvailabilityChanged?.Invoke(this, eArgs);
         }
 
         private void _tmrChecker_Elapsed(object sender, ElapsedEventArgs e)
@@ -54,7 +99,7 @@ namespace AG.WebHelpers
 
         public double CheckingInterval
         {
-            get { return _successfulCheckingInterval; }
+            get => _successfulCheckingInterval;
             set
             {
                 _successfulCheckingInterval = value;
@@ -64,7 +109,7 @@ namespace AG.WebHelpers
 
         public bool CheckingOnIntervalEnabled
         {
-            get { return _tmrChecker.Enabled; }
+            get => _tmrChecker.Enabled;
             set
             {
                 if (_tmrChecker.Enabled != value)
@@ -96,7 +141,7 @@ namespace AG.WebHelpers
                 SetAvailability(res, messageFunc);
                 callback?.Invoke(res);
             });
-            return _isAvailable;
+            return _previousState;
         }
     }
 }

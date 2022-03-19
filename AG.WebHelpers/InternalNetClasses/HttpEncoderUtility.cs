@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace AG.WebHelpers.InternalNetClasses
+﻿namespace AG.WebHelpers.InternalNetClasses
 {
     public static class HttpEncoderUtility
     {

@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Text;
-using AG.WebHelpers;
-
-namespace AG.WebHelpers.Requesting
+﻿namespace AG.WebHelpers.Requesting
 {
     public abstract class RequestProcessor<TContentFormat> : RawRequestProcessor, IRequestProcessor
     {

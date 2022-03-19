@@ -58,11 +58,11 @@ namespace AG.WebHelpers
 
                     using (var netStream = tcpClient.GetStream())
                     {
-                        byte[] bytes = new byte[tcpClient.ReceiveBufferSize];
-                        netStream.Read(bytes, 0, tcpClient.ReceiveBufferSize);
-                        string returndata = Encoding.UTF8.GetString(bytes);
-                        returndata = returndata.TrimEnd('\0');
-                        messageReceivedHandler(this, new MessageEventArgs(returndata));
+                        var bytes = new byte[tcpClient.ReceiveBufferSize];
+                        var readBytesCount = netStream.Read(bytes, 0, tcpClient.ReceiveBufferSize);
+                        var returnData = Encoding.UTF8.GetString(bytes, 0, readBytesCount);
+                        returnData = returnData.TrimEnd('\0');
+                        messageReceivedHandler(this, new MessageEventArgs(returnData));
                         netStream.Close();
                     }
                 }
@@ -93,5 +93,7 @@ namespace AG.WebHelpers
         {
             Message = message;
         }
+
+        public override string ToString() => Message;
     }
 }
