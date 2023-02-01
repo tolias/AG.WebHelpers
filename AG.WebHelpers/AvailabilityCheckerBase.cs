@@ -11,32 +11,47 @@ namespace AG.WebHelpers
         private bool _previousState;
         private bool _previousStateWithoutFiltering;
         public event EventHandler<AvailabilityEventArgs> AvailabilityChanged;
-        private double _successfulCheckingInterval;
+        private double _successfulCheckingIntervalMilliseconds;
         public DateTime LastAvailabilityTime { get; protected set; }
         public DateTime LastUnavailabilityTime { get; protected set; }
+        public bool CheckIsInProgress { get; protected set; }
         public TimeSpan MaxUnavailabilityIntervalToIgnore;
-        private readonly Logger _logger;
+        protected readonly Logger Logger;
+        protected string _lastMessage;
+
+        public AvailabilityCheckIntervalOption WhenCheckIsOngoing =
+            AvailabilityCheckIntervalOption.SkipNewCheckIfOngoingCheckIsInProgress;
 
         protected AvailabilityCheckerBase(Logger logger)
         {
-            _logger = logger;
+            ClassName = $"{GetType().Name}: ";
+            Logger = logger;
             _tmrChecker.Elapsed += _tmrChecker_Elapsed;
         }
 
         public TimeSpan LastUnavailabilityInterval => LastUnavailabilityTime - LastAvailabilityTime;
+
+        protected readonly string ClassName;
 
         public bool IsLastUnavailabilityFilteredOut
         {
             get
             {
                 if (MaxUnavailabilityIntervalToIgnore == TimeSpan.Zero)
+                {
+                    Logger.Debug(ClassName + "MaxUnavailabilityIntervalToIgnore is zero. Don't filter out unavailability");
                     return false;
+                }
 
-                return LastUnavailabilityInterval < MaxUnavailabilityIntervalToIgnore;
+                var filterOut = LastUnavailabilityInterval < MaxUnavailabilityIntervalToIgnore;
+                var filterMsg = ClassName + (filterOut ? "Filter out" : "Don't filter out") + " unavailability: ";
+                Logger.Debug(filterMsg + $"LastUnavailabilityInterval: {LastUnavailabilityInterval}; MaxUnavailabilityIntervalToIgnore: {MaxUnavailabilityIntervalToIgnore}; LastAvailabilityTime: {LastAvailabilityTime}; LastUnavailabilityTime: {LastUnavailabilityTime}");
+
+                return filterOut;
             }
         }
 
-        private void SetAvailability(bool state, Func<string> messageFunc)
+        private void SetAvailability(bool state, string message)
         {
             _previousStateWithoutFiltering = state;
 
@@ -51,58 +66,72 @@ namespace AG.WebHelpers
                     return;
 
                 _previousState = true;
-                _tmrChecker.Interval = _successfulCheckingInterval;
-                _logger.Debug($"Set successful check interval: {_tmrChecker.Interval}");
-                OnAvailabilityChanged(messageFunc);
+                _tmrChecker.Interval = _successfulCheckingIntervalMilliseconds;
+                Logger.Debug(ClassName + $"Set successful check interval: {_tmrChecker.Interval}");
+                OnAvailabilityChanged(message);
 
                 return;
             }
 
-            if (_tmrChecker.Interval >= _successfulCheckingInterval - 1000)
+            // if _tmrChecker.Interval ~ _successfulCheckingInterval then it's the first false state. Set minimal check interval
+            if (_tmrChecker.Interval >= _successfulCheckingIntervalMilliseconds - 1000)
             {
                 _tmrChecker.Interval = 1000;
-                _logger.Debug($"Set check interval to {_tmrChecker.Interval}");
+                Logger.Debug(ClassName + $"Set check interval to {_tmrChecker.Interval}");
             }
-            else if (_tmrChecker.Interval < _successfulCheckingInterval / 2)
+            else if (_tmrChecker.Interval < _successfulCheckingIntervalMilliseconds / 2)
             {
                 _tmrChecker.Interval += 5000;
-                _logger.Debug($"Set check interval to {_tmrChecker.Interval}");
+                Logger.Debug(ClassName + $"Set check interval to {_tmrChecker.Interval}");
             }
             else
-                _logger.Debug($"Leave check interval: {_tmrChecker.Interval}");
+                Logger.Debug(ClassName + $" Leave check interval: {_tmrChecker.Interval}");
 
             if (!_previousState)
+            {
+                if (message != null)
+                    OnAvailabilityChanged(message);
                 return;
+            }
 
             if (IsLastUnavailabilityFilteredOut)
             {
-                _logger.Debug($"Not available but filtered out for {this}: availability time: {LastAvailabilityTime}, unavailability time: {LastUnavailabilityTime}");
+                Logger.Debug(ClassName + $"Not available but filtered out for {this}: availability time: {LastAvailabilityTime}, unavailability time: {LastUnavailabilityTime}");
                 return;
             }
 
             _previousState = false;
-            OnAvailabilityChanged(messageFunc);
+            OnAvailabilityChanged(message);
         }
 
-        protected void OnAvailabilityChanged(Func<string> messageFunc)
+        protected void OnAvailabilityChanged(string message)
         {
-            var eArgs = new AvailabilityEventArgs(_previousState, messageFunc?.Invoke(), LastAvailabilityTime, LastUnavailabilityTime);
-            _logger.Debug($"Availability changed for {this}: {eArgs}");
+            var eArgs = new AvailabilityEventArgs(_previousState, message, LastAvailabilityTime, LastUnavailabilityTime);
+            Logger.Debug(ClassName + $"Availability changed: {eArgs}");
             AvailabilityChanged?.Invoke(this, eArgs);
         }
 
         private void _tmrChecker_Elapsed(object sender, ElapsedEventArgs e)
         {
-            var res = CheckForAvailability(out var messageFunc);
-            SetAvailability(res, messageFunc);
+            if (CheckIsInProgress)
+            {
+                switch (WhenCheckIsOngoing)
+                {
+                    case AvailabilityCheckIntervalOption.SkipNewCheckIfOngoingCheckIsInProgress:
+                        return;
+                }
+            }
+
+            var res = CheckForAvailability(out var message);
+            SetAvailability(res, message);
         }
 
-        public double CheckingInterval
+        public double CheckingIntervalMilliseconds
         {
-            get => _successfulCheckingInterval;
+            get => _successfulCheckingIntervalMilliseconds;
             set
             {
-                _successfulCheckingInterval = value;
+                _successfulCheckingIntervalMilliseconds = value;
                 _tmrChecker.Interval = value;
             }
         }
@@ -126,7 +155,26 @@ namespace AG.WebHelpers
             return CheckForAvailabilityAsync(firstCheckCallback);
         }
 
-        public abstract bool CheckForAvailability(out Func<string> messageFunc);
+        public bool CheckForAvailability(out string message)
+        {
+            CheckIsInProgress = true;
+            try
+            {
+                var success = CheckForAvailabilityInternal(out message);
+                if (!IsErrorTypeTheSame(message))
+                    _lastMessage = message;
+                else
+                    message = null;
+
+                return success;
+            }
+            finally
+            {
+                CheckIsInProgress = false;
+            }
+        }
+
+        protected abstract bool CheckForAvailabilityInternal(out string message);
 
         /// <summary>
         /// 
@@ -137,11 +185,18 @@ namespace AG.WebHelpers
         {
             ThreadPool.QueueUserWorkItem((param) =>
             {
-                var res = CheckForAvailability(out var messageFunc);
-                SetAvailability(res, messageFunc);
+                var res = CheckForAvailability(out var message);
+                SetAvailability(res, message);
                 callback?.Invoke(res);
             });
             return _previousState;
         }
+
+        /// <summary>
+        /// Returns True if the previous error message type is the same as the passed one. Use this method to avoid spamming with the same errors on every check
+        /// </summary>
+        /// <param name="error">An error message which will be compared with the previous message</param>
+        /// <returns>True if the previous error message type is the same as the passed one</returns>
+        protected virtual bool IsErrorTypeTheSame(string error) => error == _lastMessage;
     }
 }
